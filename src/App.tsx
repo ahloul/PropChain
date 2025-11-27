@@ -6,17 +6,32 @@ import { ListingsPage } from './pages/ListingsPage';
 import { PropertyDetailPage } from './pages/PropertyDetailPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { WalletModal } from './components/WalletModal';
+import { WalletProvider, useWallet } from './context/WalletContext';
 
 const AppContent: React.FC = () => {
-  const [walletConnected, setWalletConnected] = useState(false);
+  const {
+    address,
+    connectWallet,
+    disconnectWallet,
+    isConnecting,
+    error,
+    isMetaMaskAvailable,
+    formattedAddress,
+    clearError,
+  } = useWallet();
   const [favorites, setFavorites] = useState(['1', '4']);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleConnectWallet = () => {
-    // Mock wallet connection with animation
-    setTimeout(() => {
-      setWalletConnected(!walletConnected);
-    }, 1000);
+  const openWalletModal = () => {
+    clearError();
+    setIsWalletModalOpen(true);
+  };
+
+  const closeWalletModal = () => {
+    clearError();
+    setIsWalletModalOpen(false);
   };
 
   const handleToggleFavorite = (propertyId: string) => {
@@ -34,8 +49,20 @@ const AppContent: React.FC = () => {
   return (
     <>
       <Navbar 
-        onConnectWallet={handleConnectWallet}
-        walletConnected={walletConnected}
+        onConnectWallet={openWalletModal}
+        walletAddress={formattedAddress || null}
+      />
+
+      <WalletModal
+        isOpen={isWalletModalOpen}
+        onClose={closeWalletModal}
+        onConnectMetaMask={connectWallet}
+        onDisconnect={disconnectWallet}
+        address={address}
+        formattedAddress={formattedAddress}
+        isConnecting={isConnecting}
+        error={error}
+        isMetaMaskAvailable={isMetaMaskAvailable}
       />
       
       <Routes>
@@ -75,8 +102,10 @@ const AppContent: React.FC = () => {
           path="/dashboard" 
           element={
             <DashboardPage 
-              walletConnected={walletConnected}
-              onConnectWallet={handleConnectWallet}
+              walletAddress={address}
+              formattedAddress={formattedAddress}
+              onConnectWallet={openWalletModal}
+              onDisconnectWallet={disconnectWallet}
             />
           } 
         />
@@ -88,7 +117,9 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <WalletProvider>
+        <AppContent />
+      </WalletProvider>
     </Router>
   );
 }
